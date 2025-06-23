@@ -1,3 +1,6 @@
+document.addEventListener("DOMContentLoaded", () => {
+  // tout ton script ici
+});
 const clientLines = {};
 let currentClient = "Client 1";
 
