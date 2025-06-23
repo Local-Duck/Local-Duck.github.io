@@ -1,140 +1,119 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const clientLines = {};
-  let currentClient = "Client 1";
+// Tabs Logic
+const tabs = document.querySelectorAll('[data-tab-value]');
+const tabInfos = document.querySelectorAll('[data-tab-info]');
 
-  const container = document.getElementById("lines-container");
-  const clientSelect = document.getElementById("client");
-  const resultTable = document.getElementById("result-table");
-  const headerRow = document.getElementById("header-row");
-  const resultTableBody = resultTable.querySelector("tbody");
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const target = document.querySelector(tab.dataset.tabValue);
 
-  clientSelect.addEventListener("change", () => {
-    saveCurrentLines();
-    currentClient = clientSelect.value;
-    loadClientLines();
+    tabInfos.forEach(tabInfo => tabInfo.classList.remove('active'));
+    tabs.forEach(t => t.classList.remove('active'));
+
+    tab.classList.add('active');
+    target.classList.add('active');
   });
-
-  function addLine(designationVal = "", cadreVal = "") {
-    const line = document.createElement("div");
-    line.className = "line";
-
-    const designationInput = document.createElement("input");
-    designationInput.placeholder = "Désignation";
-    designationInput.value = designationVal;
-
-    const cadreInput = document.createElement("input");
-    cadreInput.placeholder = "Quantité (ex : 5 ou -3)";
-    cadreInput.value = cadreVal;
-
-    const removeBtn = document.createElement("button");
-    removeBtn.textContent = "Supprimer";
-    removeBtn.onclick = () => line.remove();
-
-    line.appendChild(designationInput);
-    line.appendChild(cadreInput);
-    line.appendChild(removeBtn);
-    container.appendChild(line);
-  }
-
-  function saveCurrentLines() {
-    const lines = [];
-    for (const line of container.children) {
-      const inputs = line.getElementsByTagName("input");
-      if (inputs.length === 2) {
-        const designation = inputs[0].value.trim();
-        const cadre = inputs[1].value.trim();
-        lines.push([designation, cadre]);
-      }
-    }
-    clientLines[currentClient] = lines;
-  }
-
-  function loadClientLines() {
-    container.innerHTML = "";
-    const lines = clientLines[currentClient] || [];
-    if (lines.length === 0) {
-      addLine();
-    } else {
-      for (const [designation, cadre] of lines) {
-        addLine(designation, cadre);
-      }
-    }
-  }
-
-  function faireDebit() {
-    saveCurrentLines();
-    const lignes = clientLines[currentClient] || [];
-    if (lignes.length === 0) {
-      alert(`Aucune ligne valide pour ${currentClient}`);
-      return;
-    }
-
-    // Extraire toutes les désignations uniques
-    const allDesignations = new Set();
-    for (const client in clientLines) {
-      clientLines[client].forEach(([designation, _]) => {
-        if (designation) allDesignations.add(designation);
-      });
-    }
-    const designations = Array.from(allDesignations);
-
-    // Mettre à jour l'en-tête du tableau
-    headerRow.innerHTML = "<th>Client</th>";
-    designations.forEach(designation => {
-      const th = document.createElement("th");
-      th.textContent = designation;
-      headerRow.appendChild(th);
-    });
-    const totalTh = document.createElement("th");
-    totalTh.textContent = "Total Besoins";
-    headerRow.appendChild(totalTh);
-
-    // Mettre à jour ou ajouter la ligne du client
-    let clientRow = Array.from(resultTableBody.rows).find(row => row.cells[0].textContent === currentClient);
-    if (!clientRow) {
-      clientRow = resultTableBody.insertRow();
-      const clientCell = clientRow.insertCell();
-      clientCell.textContent = currentClient;
-      designations.forEach(() => clientRow.insertCell());
-      clientRow.insertCell(); // Cellule pour le total
-    }
-
-    // Réinitialiser les cellules de désignation
-    for (let i = 1; i <= designations.length; i++) {
-      clientRow.cells[i].textContent = "";
-    }
-
-    // Remplir les cellules avec les valeurs de cadre
-    let totalBesoins = 0;
-    lignes.forEach(([designation, cadreStr]) => {
-      const index = designations.indexOf(designation);
-      if (index !== -1) {
-        const cadre = parseFloat(cadreStr);
-        clientRow.cells[index + 1].textContent = isNaN(cadre) ? "" : cadre;
-        if (!isNaN(cadre)) totalBesoins += cadre;
-      }
-    });
-
-    // Mettre à jour la cellule du total
-    clientRow.cells[designations.length + 1].textContent = totalBesoins;
-  }
-
-  // Tabs Logic
-  const tabs = document.querySelectorAll('[data-tab-value]');
-  const tabInfos = document.querySelectorAll('[data-tab-info]');
-
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const target = document.querySelector(tab.dataset.tabValue);
-
-      tabInfos.forEach(tabInfo => tabInfo.classList.remove('active'));
-      tabs.forEach(t => t.classList.remove('active'));
-
-      tab.classList.add('active');
-      target.classList.add('active');
-    });
-  });
-
-  // Initialisation
-  addLine();
 });
+
+/* ---------- import Excel ---------- */
+document.getElementById('excelFile').addEventListener('change', handleExcel, false);
+
+function handleExcel(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = event => {
+    const data      = new Uint8Array(event.target.result);
+    const workbook  = XLSX.read(data, { type: 'array' });
+    const sheet     = workbook.Sheets[workbook.SheetNames[0]];
+   const rows = XLSX.utils.sheet_to_json(sheet, {
+  defval: '',
+  range: 3 // ligne 4
+});
+
+    // Nettoyer d'abord tous les onglets (hors General)
+    tabInfos.forEach(tab => {
+      if (tab.id !== 'tab_0') tab.innerHTML = '';
+    });
+
+    // Grouper par famille et injecter
+    const grouped = {};
+    rows.forEach(row => {
+      const fam = (row.FAMILLE || '').trim();
+      if (!fam) return;                         // aucune famille
+      if (!grouped[fam]) grouped[fam] = [];
+      grouped[fam].push(row);
+    });
+
+    Object.entries(grouped).forEach(([fam, list]) => {
+  const targetTab = Array.from(tabInfos).find(t => t.id !== 'tab_0' &&
+                                                   tabsNamed(t.id) === fam);
+  if (!targetTab) return;
+
+  const table = document.createElement('table');
+  table.className = 'excel-table';
+
+  const thead = document.createElement('thead');
+  thead.innerHTML = `<tr>
+    ${Object.keys(list[0]).map(h => `<th>${h}</th>`).join('')}
+  </tr>`;
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  list.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = Object.values(r).map(v => `<td>${v}</td>`).join('');
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  // Ajoute le tableau
+  targetTab.appendChild(table);
+
+  // Crée un bouton "Imprimer"
+  const printBtn = document.createElement('button');
+  printBtn.textContent = 'Imprimer cette famille';
+  printBtn.className = 'print-button';
+
+  // Ajoute l'action d'impression
+  printBtn.addEventListener('click', () => {
+    const tableClone = table.cloneNode(true);
+    // Supprimer lignes avec TOTAL == 0
+    const rows = tableClone.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      const totalIndex = Array.from(tableClone.querySelectorAll('th')).findIndex(th => th.textContent.trim().toUpperCase() === 'TOTAL');
+      if (totalIndex >= 0 && cells[totalIndex].textContent.trim() === '0') {
+        row.remove();
+      }
+    });
+
+    // Ouvre une fenêtre pour impression
+    const win = window.open('', '', 'height=700,width=900');
+    win.document.write('<html><head><title>Impression</title>');
+    win.document.write('<style>table {border-collapse: collapse; width: 100%;} th, td {border: 1px solid #000; padding: 4px;}</style>');
+    win.document.write('</head><body>');
+    win.document.write(`<h3>${fam}</h3>`);
+    win.document.write(tableClone.outerHTML);
+    win.document.write('</body></html>');
+    win.document.close();
+    win.print();
+  });
+
+  // Ajoute le bouton sous le tableau
+  targetTab.appendChild(printBtn);
+});
+
+    document.getElementById('importMsg').textContent = 
+      `Import terminé : ${rows.length} lignes réparties dans ${Object.keys(grouped).length} familles.`;
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ---------- utilitaire : correspondance id->label ---------- */
+function tabsNamed(tabId) {
+  const span = Array.from(tabs).find(s => s.dataset.tabValue === `#${tabId}`);
+  return span ? span.textContent.trim() : '';
+}
+// Initialisation
+addLine();
