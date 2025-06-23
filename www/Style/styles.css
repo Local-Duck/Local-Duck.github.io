@@ -1,0 +1,106 @@
+body {
+  font-family: Arial;
+  margin: 20px;
+  background: white;
+}
+
+.client-select, .buttons {
+  margin-bottom: 15px;
+}
+
+.line {
+  margin-bottom: 5px;
+  display: flex;
+  gap: 10px;
+}
+
+.line input {
+  width: 120px;
+}
+
+.scrollable {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+.result-table {
+  margin-top: 20px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 5px;
+  text-align: center;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  border: 1px solid #ccc;
+  margin-top: 1rem;
+}
+
+[data-tab-info] {
+  display: none;
+}
+
+.active[data-tab-info] {
+  display: block;
+}
+
+.tab-content {
+  margin-top: 1rem;
+  padding-left: 1rem;
+  font-size: 10px;
+  font-family: Arial;
+  font-weight: bold;
+  color: rgb(0, 0, 0);
+}
+
+.tabs {
+  background-color: #f2f2f2;
+  font-size: 10px;
+  color: rgb(0, 0, 0);
+  display: flex;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.tabs span {
+  background: #f2f2f2;
+  padding: 2px;
+  border: 1px solid #ccc;
+  transition: background 0.3s ease, color 0.3s ease;
+
+}
+
+.tabs span:hover {
+  background: rgb(55, 219, 46);
+  cursor: pointer;
+  color: black;
+}
+
+.tabs span.active,
+.tabs span:hover {
+  background: rgb(55, 219, 46);
+  color: #000;
+}
+
+.tabs span.active {
+  border-bottom: 2px solid green;
+  font-weight: bold;
+}
