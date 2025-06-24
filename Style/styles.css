@@ -104,3 +104,47 @@ th {
   border-bottom: 2px solid green;
   font-weight: bold;
 }
+
+.excel-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 1rem;
+}
+.excel-table th,
+.excel-table td {
+  border: 1px solid #ccc;
+  padding: 4px;
+  text-align: left;
+}
+.excel-table th {
+  background: #f0f0f0;
+}
+.editable-table td {
+  min-width: 80px;
+  padding: 5px;
+  border: 1px solid #ddd;
+}
+
+.editable-table td[contenteditable="true"] {
+  background-color: #fff9c4;
+  border: 1px solid #ffeb3b;
+}
+
+.edit-button, .print-button {
+  margin: 10px 5px;
+  padding: 5px 10px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.print-button {
+  background: #2196F3;
+}
+
+/* Style pour les cellules calculées */
+td[data-calculated] {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
